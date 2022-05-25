@@ -22,16 +22,16 @@ typedef struct cell_t
 {
     struct
     {
-        compute1 func;
-        struct cell_t *a;
-    }comp1;
+        compute1 function;
+        struct cell_t *input;
+    } compute1;
 
     struct
     {
-        compute2 func;
-        struct cell_t *a;
-        struct cell_t *b;
-    }comp2;
+        compute2 function;
+        struct cell_t *inputA;
+        struct cell_t *inputB;
+    } compute2;
 
     int value;
     bool isCompute;

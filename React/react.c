@@ -2,17 +2,17 @@
 
 callback_id add_callback(cell_t *c, void *info, callback cb)
 {
-   uint8_t i;
-   for(i = 0; i < MAXCALLBACKS; i++)
+   callback_id id;
+   for(id = 0; id < MAXCALLBACKS; id++)
    {
-      if(c->callbacks[i].cb == NULL)
+      if(c->callbacks[id].cb == NULL)
       {
-         c->callbacks[i].cb = cb;
-         c->callbacks[i].info = info;
+         c->callbacks[id].cb = cb;
+         c->callbacks[id].info = info;
          break;
       }
    }
-   return i;
+   return id;
 }
 
 void remove_callback(cell_t *c, callback_id id)
@@ -20,7 +20,7 @@ void remove_callback(cell_t *c, callback_id id)
    c->callbacks[id].cb = NULL;
 }
 
-void trigger_callbacks(cell_t *c)
+static void trigger_callbacks(cell_t *c)
 {
    for(callback_id id = 0; id < MAXCALLBACKS; id++)
    {
@@ -31,7 +31,7 @@ void trigger_callbacks(cell_t *c)
    }
 }
 
-void update_values(cell_t *c)
+static void update_values(cell_t *c)
 {
    if(c != NULL)
    {
@@ -40,14 +40,14 @@ void update_values(cell_t *c)
       {
          int old_value = c->value;
 
-         if(c->comp1.func != NULL)
+         if(c->compute1.function != NULL)
          {
-            c->value = c->comp1.func(c->comp1.a->value);
+            c->value = c->compute1.function(c->compute1.input->value);
          }
 
-         else if(c->comp2.func != NULL)
+         else if(c->compute2.function != NULL)
          {
-            c->value = c->comp2.func(c->comp2.a->value, c->comp2.b->value);
+            c->value = c->compute2.function(c->compute2.inputA->value, c->compute2.inputB->value);
          }
 
          if(c->value != old_value)
@@ -70,13 +70,13 @@ int get_cell_value(cell_t *cell)
    return cell->value;
 }
 
-void add_cell(reactor_t *r, cell_t *c)
+static void add_cell(reactor_t *r, cell_t *c)
 {
    c->next = r->head;
    r->head = c;
 }
 
-cell_t *alloc_cell(reactor_t *r)
+static cell_t *allocate_cell(reactor_t *r)
 {
    cell_t *c = calloc(1, sizeof(cell_t));
    c->reactor = r;
@@ -84,31 +84,31 @@ cell_t *alloc_cell(reactor_t *r)
    return c;
 }
 
-cell_t *create_compute2_cell(reactor_t *r, cell_t *in_a, cell_t *in_b, compute2 func)
+cell_t *create_compute2_cell(reactor_t *r, cell_t *inputA, cell_t *inputB, compute2 function)
 {
-   cell_t *c = alloc_cell(r);
-   c->value = func(in_a->value, in_b->value);
-   c->comp2.func = func;
-   c->comp2.a = in_a;
-   c->comp2.b = in_b;
+   cell_t *c = allocate_cell(r);
+   c->value = function(inputA->value, inputB->value);
+   c->compute2.function = function;
+   c->compute2.inputA = inputA;
+   c->compute2.inputB = inputB;
    c->isCompute = true;
    return c;
 }
 
-cell_t *create_compute1_cell(reactor_t *r, cell_t *in, compute1 func)
+cell_t *create_compute1_cell(reactor_t *r, cell_t *input, compute1 function)
 {
-   cell_t *c = alloc_cell(r);
-   c->value = func(in->value);
-   c->comp1.func = func;
-   c->comp1.a = in;
+   cell_t *c = allocate_cell(r);
+   c->value = function(input->value);
+   c->compute1.function = function;
+   c->compute1.input = input;
    c->isCompute = true;
    return c;
 }
 
-cell_t *create_input_cell(reactor_t *r, int init_val)
+cell_t *create_input_cell(reactor_t *r, int initialValue)
 {
-   cell_t *c = alloc_cell(r);
-   c->value = init_val;
+   cell_t *c = allocate_cell(r);
+   c->value = initialValue;
    return c;
 }
 
@@ -118,7 +118,7 @@ reactor_t *create_reactor()
    return r;
 }
 
-void destroy_cells(cell_t *c)
+static void destroy_cells(cell_t *c)
 {
    if(c != NULL)
    {
